@@ -56,6 +56,7 @@
 # undef UARTTY_OCRNL
 # define UARTTY_ONLCR 1
 # define UARTTY_ICANON 1
+# define UARTTY_IEXTEN 1
 # define UARTTY_ECHO 1
 # define UARTTY_ECHOE 1
 # define UARTTY_ECHOK 1
@@ -84,6 +85,11 @@
 #if !UARTTY_OPOST
 # undef UARTTY_ONLCR
 # undef UARTTY_OCRNL
+#endif
+
+// WERASE is disabled if IEXTEN is not set
+#if !UARTTY_IEXTEN
+# undef UARTTY_WERASE
 #endif
 
 // atmega328p

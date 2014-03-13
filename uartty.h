@@ -26,6 +26,8 @@
 // Local flags (c_lflag)
 // ICANON: enable canonical mode
 #define UARTTY_ICANON 1
+// IEXTEN: enable extended input processing
+#define UARTTY_IEXTEN 1
 // ECHO: echo input characters
 #define UARTTY_ECHO 1
 // ECHOE: erase character erases the preceding input character, and werase

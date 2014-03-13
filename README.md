@@ -124,6 +124,7 @@ of modes:
 If you know what you're doing, you can disable all presets and instead
 enable or disable each option individually:
 * UARTTY\_ICANON: enable canonical processing
+* UARTTY\_IEXTEN: enable extended input processing
 * UARTTY\_ECHO: echo received characters
 * UARTTY\_ECHOE: echo character erases
 * UARTTY\_ECHOK: kill character erases the current line
