@@ -5,6 +5,7 @@
 #include <avr/io.h>
 
 #include "uartty.h"
+#include "uartty-config.h"
 
 #if !UARTTY_BLOCK && !UARTTY_NONBLOCK
 #error UARTTY_BLOCK or UARTTY_NONBLOCK (or both) must be enabled

@@ -23,7 +23,7 @@ CFLAGS += -Wall #-O2 #-g
 all:
 avr: all
 
-uartty.o: uartty.h
+uartty.o: uartty.h uartty-config.h
 
 .PHONY: obj avr
 obj: $(OBJ)
