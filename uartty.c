@@ -286,6 +286,11 @@ static int rx_put(char data)
 static volatile unsigned char erase_count;
 
 #define CTRL(x) ((x) - 0x40)
+#define ISCTL(x) (iscntrl(x) && \
+                   (x) != '\t' && \
+                   (x) != '\n' && \
+                   (x) != CTRL('Q') && \
+                   (x) != CTRL('S'))
 
 // return true if character is erased
 static bool erase_if_not(bool (*cond)(int c), bool kill)
@@ -299,7 +304,7 @@ static bool erase_if_not(bool (*cond)(int c), bool kill)
 			// TODO protect erase_count
 			unsigned char e = erase_count;
 			++e;
-			if (UARTTY_ECHOCTL && !isprint(u))
+			if (UARTTY_ECHOCTL && ISCTL(u))
 				++e;
 			erase_count = e;
 		}
@@ -322,7 +327,7 @@ static void echo(char c)
 {
 	if ((UARTTY_ECHO || UARTTY_ECHONL) && c == '\n') {
 		tx_put('\n');
-	} else if (UARTTY_ECHOCTL && !isprint(c)) {
+	} else if (UARTTY_ECHOCTL && ISCTL(c)) {
 		// echoctl
 		// print non-printable characters as ^X where X
 		// is c xor 0x40
