@@ -20,10 +20,19 @@ OBJ = $(SRC:.c=.o) $(ASRC:.S=.o)
 
 CFLAGS += -Wall #-O2 #-g
 
-all:
+all: demo.hex
 avr: all
 
 uartty.o: uartty.h uartty-config.h
+
+demo.elf: demo.o uartty.o
+
+%.elf: $(OBJ)
+	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $^
+
+%.hex: %.elf
+	$(OBJCOPY) -O ihex -R .eeprom $< $@
+
 
 .PHONY: obj avr
 obj: $(OBJ)
