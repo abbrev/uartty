@@ -78,7 +78,7 @@
 # undef UARTTY_ERASE
 # undef UARTTY_WERASE
 # undef UARTTY_KILL
-# undef UARTTY_RPRNT
+# undef UARTTY_REPRINT
 #endif
 
 // all output processing is disabled if OPOST is not set
@@ -351,7 +351,7 @@ ISR(UART0_RECEIVE_INTERRUPT)
 	} else
 #endif
 #if 0 // not implemented
-#if UARTTY_RPRNT
+#if UARTTY_REPRINT
 	if (data == CTRL('R')) {
 		// rprnt = ^R
 		/*

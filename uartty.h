@@ -44,7 +44,7 @@
 #define UARTTY_ERASE  0x7f
 #define UARTTY_WERASE CTRL('W')
 #define UARTTY_KILL   CTRL('U')
-//#define UARTTY_RPRNT 1 // not implemented
+//#define UARTTY_REPRINT 1 // not implemented
 
 // Input modes (c_iflag)
 // ICRNL: convert carriage return to linefeed on input
