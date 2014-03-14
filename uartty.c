@@ -92,6 +92,13 @@
 # undef UARTTY_WERASE
 #endif
 
+// disable ECHO* if ECHO is not set
+#if !UARTTY_ECHO
+# undef UARTTY_ECHOE
+# undef UARTTY_ECHOK
+# undef UARTTY_ECHOCTL
+#endif
+
 // atmega328p
 #define ATMEGA_USART0
 #define UART0_RECEIVE_INTERRUPT   USART_RX_vect
@@ -221,7 +228,7 @@ static bool erase_if_not(bool (*cond)(int c), bool kill)
 	if (u == '\n' || cond(u)) {
 		rx_put(u);
 	} else if (u != -1) {
-#if UARTTY_ECHO && (UARTTY_ECHOE || UARTTY_ECHOK)
+#if UARTTY_ECHOE || UARTTY_ECHOK
 #if UARTTY_ECHOK && !UARTTY_ECHOE
 		if (kill) {
 #elif !UARTTY_ECHOK && UARTTY_ECHOE
@@ -403,7 +410,7 @@ ISR(UART0_TRANSMIT_INTERRUPT)
 	}
 #endif
 
-#if UARTTY_ECHO && (UARTTY_ECHOE || UARTTY_ECHOK)
+#if UARTTY_ECHOE || UARTTY_ECHOK
 	static char erase_state;
 
 	// TODO protect erase_count
