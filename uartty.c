@@ -65,6 +65,7 @@
 # define UARTTY_ERASE  0x7f
 # define UARTTY_WERASE CTRL('W')
 # define UARTTY_KILL   CTRL('U')
+# define UARTTY_IXON 1
 
 #else
 # error unknown value for UARTTY_PRESET
