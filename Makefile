@@ -49,5 +49,16 @@ obj: $(OBJ)
 %.lss: %.elf
 	$(OBJDUMP) -h -S $< >$@
 
+ifeq ($(TARGET),avr)
+burn: demo.hex
+	@read -p 'press enter when ready to burn: '
+	avrdude -P /dev/ttyUSB0 -p m328p -c arduino -v -v -U flash:w:demo.hex
+else
+burn:
+	@echo error: burn is for avr only!
+	@false
+endif
+
+
 clean:
-	rm -f synth *.elf $(OBJ) synth.hex *.lss wave.c
+	rm -f demo *.elf $(OBJ) demo.hex *.lss
