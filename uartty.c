@@ -103,8 +103,8 @@
 
 // atmega328p
 #define ATMEGA_USART0
-#define UART0_RECEIVE_INTERRUPT   USART_RX_vect
-#define UART0_TRANSMIT_INTERRUPT  USART_UDRE_vect
+#define UART0_RX_INTERRUPT USART_RX_vect
+#define UART0_TX_INTERRUPT USART_UDRE_vect
 #define UART0_STATUS   UCSR0A
 #define UART0_CONTROL  UCSR0B
 #define UART0_DATA     UDR0
@@ -231,6 +231,9 @@ static volatile unsigned char inlcount; // XXX this may need to be protected
 #define RXQEMPTY() (rxq.get == rxq.put)
 #define TXQEMPTY() (txq.get == txq.put)
 
+#define DISABLE_TX_INTERRUPT() (UART0_CONTROL &= ~(1<<UART0_UDRIE))
+#define  ENABLE_TX_INTERRUPT() (UART0_CONTROL |= (1<<UART0_UDRIE))
+
 // send a character and return the character
 // return -1 if queue is full
 static int tx_put(char data)
@@ -238,7 +241,9 @@ static int tx_put(char data)
 	unsigned char put = (txq.put + 1) & UARTTY_TX_BUF_MASK;
 	if (put == txq.get) return -1;
 
-	txq.buf[put] = data;
+	txq.buf[txq.put] = data;
+	txq.put = put;
+	ENABLE_TX_INTERRUPT();
 	return (unsigned char)data;
 }
 
@@ -307,6 +312,7 @@ static bool erase_if_not(bool (*cond)(int c), bool kill)
 			if (UARTTY_ECHOCTL && ISCTL(u))
 				++e;
 			erase_count = e;
+			ENABLE_TX_INTERRUPT();
 		}
 		return true;
 	}
@@ -340,10 +346,7 @@ static void echo(char c)
 
 static volatile bool halt_output = false;
 
-#define DISABLE_TX_INTERRUPT() (UART0_CONTROL &= ~(1<<UART0_UDRIE))
-#define  ENABLE_TX_INTERRUPT() (UART0_CONTROL |= (1<<UART0_UDRIE))
-
-ISR(UART0_RECEIVE_INTERRUPT)
+ISR(UART0_RX_INTERRUPT)
 {
 	char data = UART0_DATA;
 
@@ -403,7 +406,7 @@ ISR(UART0_RECEIVE_INTERRUPT)
 		// limit line to 2 less than queue size if character is not a
 		// newline character or to 1 less than queue size if it is
 		if (UARTTY_ICANON && data == '\n') ++inlcount;
-		rxq.buf[put] = data;
+		rxq.buf[rxq.put] = data;
 		rxq.put = put;
 
 		echo(data);
@@ -414,7 +417,7 @@ ISR(UART0_RECEIVE_INTERRUPT)
 	}
 }
 
-ISR(UART0_TRANSMIT_INTERRUPT)
+ISR(UART0_TX_INTERRUPT)
 {
 	if (UARTTY_IXON && halt_output) {
 		DISABLE_TX_INTERRUPT();
@@ -482,15 +485,19 @@ void uartty_init(unsigned int ubrr)
 	UCSR0C = (1 << UCSZ01) | (1 << UCSZ00) | (0 << USBS0) |
 	         (0 << UPM01) | (0 << UPM00) | (0 << UMSEL01) | (0 << UMSEL00);
 
+	sei(); // XXX should the application do this?
 }
 
 static int rxget(void)
 {
 	if (UARTTY_ICANON && !inlcount) return -1;
 
-	unsigned char get = (txq.get + 1) & UARTTY_RX_BUF_MASK;
+	unsigned char get = rxq.get;
+	if (get == rxq.put) return -1;
+
 	char data = rxq.buf[rxq.get];
-	rxq.get = get;
+
+	rxq.get = (get + 1) & UARTTY_RX_BUF_MASK;;
 	if (UARTTY_ICANON && data == '\n') --inlcount;
 	return (unsigned char)data;
 }
