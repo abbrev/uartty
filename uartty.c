@@ -354,15 +354,13 @@ static bool never(int c) { return false; }
 
 static void echo(char c)
 {
-	if ((UARTTY_ECHO || UARTTY_ECHONL) && c == '\n') {
-		tx_put('\n');
-	} else if (UARTTY_ECHOCTL && ISCTL(c)) {
+	if (UARTTY_ECHOCTL && ISCTL(c)) {
 		// echoctl
 		// print non-printable characters as ^X where X
 		// is c xor 0x40
 		tx_put('^');
 		tx_put(c^0x40);
-	} else if (UARTTY_ECHO) {
+	} else if (UARTTY_ECHO || (UARTTY_ECHONL && c == '\n')) {
 		tx_put(c);
 	}
 }

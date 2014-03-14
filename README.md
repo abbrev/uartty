@@ -148,7 +148,7 @@ enable or disable each option individually:
 
 Enabling/disabling these options affects the generated code size:
 * 268 with "raw" preset
-* 1192 with "sane" preset
+* 1142 with "sane" preset
 (These are only the common configurations. A complete list of sizes for
 each combination of options would be prohibitively large.)
 
