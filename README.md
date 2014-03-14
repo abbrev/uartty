@@ -145,8 +145,8 @@ enable or disable each option individually:
 
 Enabling/disabling these options affects the generated code size:
 * 216 with "raw" preset
-* 950 with "sane" preset
-* 964 bytes with every option that increases code size enabled
+* 920 with "sane" preset
+* 932 bytes with every option that increases code size enabled
 (These are only the common configurations. A complete list of sizes for
 each combination of options would be prohibitively large.)
 

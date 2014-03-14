@@ -21,7 +21,7 @@
 #define UARTTY_PRESET UARTTY_PRESET_SANE
 
 // define individual options if no preset is selected
-#ifndef UARTTY_PRESET_UARTTY
+#ifndef UARTTY_PRESET
 
 // Local flags (c_lflag)
 // ICANON: enable canonical mode

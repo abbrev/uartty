@@ -331,7 +331,7 @@ ISR(UART0_RECEIVE_INTERRUPT)
 		// erase = ^?
 		// (BS is also supported)
 		erase_if_not(never, false);
-#if !UARTY_ECHOE
+#if !UARTTY_ECHOE
 		echo(data);
 #endif
 	} else
@@ -340,7 +340,7 @@ ISR(UART0_RECEIVE_INTERRUPT)
 	if (data == CTRL('U')) {
 		// kill = ^U
 		erase_line_until(never, true);
-#if !UARTY_ECHOK
+#if !UARTTY_ECHOK
 		echo(data);
 #endif
 	} else
@@ -352,7 +352,7 @@ ISR(UART0_RECEIVE_INTERRUPT)
 		erase_line_until(is_not_space, false);
 		// gobble non-spaces
 		erase_line_until(is_space, false);
-#if !UARTY_ECHOE
+#if !UARTTY_ECHOE
 		echo(data);
 #endif
 	} else
