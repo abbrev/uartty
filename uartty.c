@@ -149,8 +149,75 @@
 # warning to have a POSIX-compliant TTY).
 #endif
 
+// Define undefined macros as 0
 
+#ifndef UARTTY_ICANON
+# define UARTTY_ICANON 0
+#endif
 
+#ifndef UARTTY_ECHO
+# define UARTTY_ECHO 0
+#endif
+
+#ifndef UARTTY_ECHOK
+# define UARTTY_ECHOK 0
+#endif
+
+#ifndef UARTTY_ECHOE
+# define UARTTY_ECHOE 0
+#endif
+
+#ifndef UARTTY_ECHOCTL
+# define UARTTY_ECHOCTL 0
+#endif
+
+#ifndef UARTTY_ECHONL
+# define UARTTY_ECHONL 0
+#endif
+
+#ifndef UARTTY_IXON
+# define UARTTY_IXON 0
+#endif
+
+#ifndef UARTTY_ISTRIP
+# define UARTTY_ISTRIP 0
+#endif
+
+#ifndef UARTTY_IGNCR
+# define UARTTY_IGNCR 0
+#endif
+
+#ifndef UARTTY_ICRNL
+# define UARTTY_ICRNL 0
+#endif
+
+#ifndef UARTTY_INLCR
+# define UARTTY_INLCR 0
+#endif
+
+#ifndef UARTTY_ERASE
+# define UARTTY_ERASE 0
+#endif
+
+#ifndef UARTTY_KILL
+# define UARTTY_KILL 0
+#endif
+
+#ifndef UARTTY_WERASE
+# define UARTTY_WERASE 0
+#endif
+
+#ifndef UARTTY_IMAXBEL
+# define UARTTY_IMAXBEL 0
+#endif
+
+#ifndef UARTTY_ONLCR
+# define UARTTY_ONLCR 0
+#endif
+
+#ifndef UARTTY_OCRNL
+# define UARTTY_OCRNL 0
+#endif
 
 
 // I call the indices "get" and "put" so they're unambiguous as "head" and
@@ -159,9 +226,7 @@
 
 static volatile QUEUE(UARTTY_TX_BUF_SIZE) txq;
 static volatile QUEUE(UARTTY_RX_BUF_SIZE) rxq;
-#if UARTTY_ICANON
 static volatile unsigned char inlcount; // XXX this may need to be protected
-#endif
 
 #define RXQEMPTY() (rxq.get == rxq.put)
 #define TXQEMPTY() (txq.get == txq.put)
@@ -222,7 +287,6 @@ static volatile unsigned char erase_count;
 
 #define CTRL(x) ((x) - 0x40)
 
-#if UARTTY_ICANON
 // return true if character is erased
 static bool erase_if_not(bool (*cond)(int c), bool kill)
 {
@@ -230,24 +294,15 @@ static bool erase_if_not(bool (*cond)(int c), bool kill)
 	if (u == '\n' || cond(u)) {
 		rx_put(u);
 	} else if (u != -1) {
-#if UARTTY_ECHOE || UARTTY_ECHOK
-#if UARTTY_ECHOK && !UARTTY_ECHOE
-		if (kill) {
-#elif !UARTTY_ECHOK && UARTTY_ECHOE
-		if (!kill) {
-#else
-		{
-#endif
-		// TODO protect erase_count
+		if ((UARTTY_ECHOK && kill) ||
+		    (UARTTY_ECHOE && !kill)) {
+			// TODO protect erase_count
 			unsigned char e = erase_count;
 			++e;
-#if UARTTY_ECHOCTL
-			if (!isprint(u))
+			if (UARTTY_ECHOCTL && !isprint(u))
 				++e;
-#endif
 			erase_count = e;
 		}
-#endif
 		return true;
 	}
 	return false;
@@ -262,30 +317,20 @@ static void erase_line_until(bool (*cond)(int c), bool kill)
 static bool is_space(int c) { return c == ' '; }
 static bool is_not_space(int c) { return c != ' '; }
 static bool never(int c) { return false; }
-#endif
 
 static void echo(char c)
 {
-#if UARTTY_ECHO || UARTTY_ECHONL
-	if (c == '\n') {
+	if ((UARTTY_ECHO || UARTTY_ECHONL) && c == '\n') {
 		tx_put('\n');
-	}
-#endif
-
-#if UARTTY_ECHO
-#  if UARTTY_ECHOCTL
-	else if (!isprint(c)) {
+	} else if (UARTTY_ECHOCTL && !isprint(c)) {
 		// echoctl
 		// print non-printable characters as ^X where X
 		// is c xor 0x40
 		tx_put('^');
 		tx_put(c^0x40);
-	}
-#  endif
-	else {
+	} else if (UARTTY_ECHO) {
 		tx_put(c);
 	}
-#endif
 }
 
 static volatile bool halt_output = false;
@@ -297,160 +342,123 @@ ISR(UART0_RECEIVE_INTERRUPT)
 {
 	char data = UART0_DATA;
 
-#if UARTTY_IXON
-	if (data == CTRL('S')) {
-		halt_output = true;
-		return;
-	} else if (data == CTRL('Q')) {
-		halt_output = false;
-		ENABLE_TX_INTERRUPT();
-		return;
+	if (UARTTY_IXON) {
+		if (data == CTRL('S')) {
+			halt_output = true;
+			return;
+		} else if (data == CTRL('Q')) {
+			halt_output = false;
+			ENABLE_TX_INTERRUPT();
+			return;
+		}
 	}
-#endif
 
-#if UARTTY_ISTRIP
-	data &= 0x7f;
-#endif
+	if (UARTTY_ISTRIP)
+		data &= 0x7f;
 
-#if UARTTY_IGNCR
-	if (data == '\r') return;
-#endif
+	if (UARTTY_IGNCR && data == '\r') return;
 
-#if UARTTY_ICRNL
-	if (data == '\r') data = '\n'; else
-#endif
-#if UARTTY_INLCR
-	if (data == '\n') data = '\r';
-#else
-	;
-#endif
+	if (UARTTY_ICRNL && data == '\r') data = '\n'; else
+	if (UARTTY_INLCR && data == '\n') data = '\r';
 
 	unsigned char put = (rxq.put + 1) & UARTTY_RX_BUF_MASK;
 	//unsigned char put2 = (rxq.put + 2) & UARTTY_RX_BUF_MASK;
 
-#if UARTTY_ERASE
-	if (data == '\b' || data == UARTTY_ERASE) {
+	if (UARTTY_ERASE && (data == '\b' || data == UARTTY_ERASE)) {
 		// erase = ^?
 		// (BS is also supported)
 		erase_if_not(never, false);
-#if !UARTTY_ECHOE
-		echo(data);
-#endif
-	} else
-#endif
-#if UARTTY_KILL
-	if (data == CTRL('U')) {
+		if (!UARTTY_ECHOE)
+			echo(data);
+	} else if (UARTTY_KILL && (data == UARTTY_KILL)) {
 		// kill = ^U
 		erase_line_until(never, true);
-#if !UARTTY_ECHOK
-		echo(data);
-#endif
-	} else
-#endif
-#if UARTTY_WERASE
-	if (data == CTRL('W')) {
+		if (!UARTTY_ECHOK)
+			echo(data);
+	} else if (UARTTY_WERASE && (data == UARTTY_WERASE)) {
 		// werase = ^W
 		// gobble spaces
 		erase_line_until(is_not_space, false);
 		// gobble non-spaces
 		erase_line_until(is_space, false);
-#if !UARTTY_ECHOE
-		echo(data);
-#endif
-	} else
-#endif
+		if (!UARTTY_ECHOE)
+			echo(data);
 #if 0 // not implemented
-#if UARTTY_REPRINT
-	if (data == CTRL('R')) {
+	} else if (UARTTY_REPRINT && (data == UARTTY_REPRINT)) {
 		// rprnt = ^R
 		/*
 		 * we could have the transmit interrupt participate in
 		 * reprinting the receive buffer somehow
 		 */
-	} else
 #endif
-#endif
-#if UARTTY_ICANON
-	if (put != rxq.get &&
-		 (data == '\n' || ((put+1)&UARTTY_RX_BUF_MASK) != rxq.get)) {
+	} else if (put != rxq.get &&
+	    (!UARTTY_ICANON ||
+	     (data == '\n' || ((put+1)&UARTTY_RX_BUF_MASK) != rxq.get))) {
 	//negated: if (put == rxq.get || (data != '\n' && put2 == rxq.get)) {
 		// limit line to 2 less than queue size if character is not a
 		// newline character or to 1 less than queue size if it is
-#if UARTTY_ICANON
-		if (data == '\n') ++inlcount;
-#endif
-#else
-	if (put != rxq.get) {
-#endif
+		if (UARTTY_ICANON && data == '\n') ++inlcount;
 		rxq.buf[put] = data;
 		rxq.put = put;
 
 		echo(data);
-	} else {
-#if UARTTY_IMAXBEL
+	} else if (UARTTY_IMAXBEL) {
 		// imaxbel
 		// send a BEL to indicate full buffer
 		tx_put('\a');
-#endif
 	}
 }
 
 ISR(UART0_TRANSMIT_INTERRUPT)
 {
-#if UARTTY_IXON
-	if (halt_output) {
+	if (UARTTY_IXON && halt_output) {
 		DISABLE_TX_INTERRUPT();
 	}
-#endif
-#if UARTTY_ONLCR
+
 	static bool sendlf = false;
-
-	if (sendlf) {
-		UART0_DATA = '\n';
-		sendlf = false;
-		return;
-	}
-#endif
-
-#if UARTTY_ECHOE || UARTTY_ECHOK
-	static char erase_state;
-
-	// TODO protect erase_count
-	if (erase_state == 0 && erase_count != 0) {
-		--erase_count;
-		erase_state = 1;
+	if (UARTTY_ONLCR) {
+		if (sendlf) {
+			UART0_DATA = '\n';
+			sendlf = false;
+			return;
+		}
 	}
 
-	// echoe
-	// erase characters with backspace-space-backspace
-	if (erase_state == 1) {
-		UART0_DATA = '\b';
-		++erase_state;
-		return;
-	} else if (erase_state == 2) {
-		UART0_DATA = ' ';
-		++erase_state;
-		return;
-	} else if (erase_state == 3) {
-		UART0_DATA = '\b';
-		erase_state = 0;
-		return;
+	if (UARTTY_ECHOE || UARTTY_ECHOK) {
+		static char erase_state;
+
+		// TODO protect erase_count
+		if (erase_state == 0 && erase_count != 0) {
+			--erase_count;
+			erase_state = 1;
+		}
+
+		// echoe
+		// erase characters with backspace-space-backspace
+		if (erase_state == 1) {
+			UART0_DATA = '\b';
+			++erase_state;
+			return;
+		} else if (erase_state == 2) {
+			UART0_DATA = ' ';
+			++erase_state;
+			return;
+		} else if (erase_state == 3) {
+			UART0_DATA = '\b';
+			erase_state = 0;
+			return;
+		}
 	}
-#endif
 
 	if (txq.put != txq.get) {
 		unsigned char get = (txq.get + 1) & UARTTY_TX_BUF_MASK;
 		char data = txq.buf[txq.get];
 		txq.get = get;
-#if UARTTY_OCRNL
-		if (data == '\r') data = '\n';
-#endif
-#if UARTTY_ONLCR
-		if (data == '\n') {
+		if (UARTTY_OCRNL && data == '\r') data = '\n';
+		if (UARTTY_ONLCR && data == '\n') {
 			data = '\r';
 			sendlf = true;
 		}
-#endif
 		UART0_DATA = data;
 	} else {
 		DISABLE_TX_INTERRUPT();
@@ -464,16 +472,12 @@ void uartty_init(unsigned int ubrr)
 
 static int rxget(void)
 {
-#if UARTTY_ICANON
-	if (!inlcount) return -1;
-#endif
+	if (UARTTY_ICANON && !inlcount) return -1;
 
 	unsigned char get = (txq.get + 1) & UARTTY_RX_BUF_MASK;
 	char data = rxq.buf[rxq.get];
 	rxq.get = get;
-#if UARTTY_ICANON
-	if (data == '\n') --inlcount;
-#endif
+	if (UARTTY_ICANON && data == '\n') --inlcount;
 	return (unsigned char)data;
 }
 
