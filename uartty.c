@@ -473,6 +473,15 @@ ISR(UART0_TRANSMIT_INTERRUPT)
 void uartty_init(unsigned int ubrr)
 {
 	// TODO
+	UBRR0 = ubrr;
+
+	// TODO verify these
+	UART0_CONTROL = (1 << RXEN0) | (1 << TXEN0) | (1 << RXCIE0);
+
+	// 8N1 asynchronous
+	UCSR0C = (1 << UCSZ01) | (1 << UCSZ00) | (0 << USBS0) |
+	         (0 << UPM01) | (0 << UPM00) | (0 << UMSEL01) | (0 << UMSEL00);
+
 }
 
 static int rxget(void)
