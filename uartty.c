@@ -479,19 +479,20 @@ ISR(UART0_TX_INTERRUPT)
 		}
 	}
 
-	if (txq.put != txq.get) {
-		unsigned char get = (txq.get + 1) & UARTTY_TX_BUF_MASK;
-		char data = txq.buf[txq.get];
-		txq.get = get;
-		if (UARTTY_OCRNL && data == '\r') data = '\n';
-		if (UARTTY_ONLCR && data == '\n') {
-			data = '\r';
-			sendlf = true;
-		}
-		UART0_DATA = data;
-	} else {
+	unsigned char get = txq.get;
+	if (txq.put == get) {
 		DISABLE_TX_INTERRUPT();
+		return;
 	}
+
+	char data = txq.buf[get];
+	txq.get = (get + 1) & UARTTY_TX_BUF_MASK;
+	if (UARTTY_OCRNL && data == '\r') data = '\n';
+	if (UARTTY_ONLCR && data == '\n') {
+		data = '\r';
+		sendlf = true;
+	}
+	UART0_DATA = data;
 }
 
 void uartty_init(unsigned int ubrr)
@@ -514,7 +515,7 @@ static int rxget(void)
 	unsigned char get = rxq.get;
 	if (get == rxq.put) return -1;
 
-	char data = rxq.buf[rxq.get];
+	char data = rxq.buf[get];
 
 	rxq.get = (get + 1) & UARTTY_RX_BUF_MASK;;
 	if (UARTTY_ICANON && data == '\n') --inlcount;
