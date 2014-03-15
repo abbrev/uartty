@@ -3,10 +3,7 @@
 ## Introduction
 
 UARTTY is a UART driver for the AVR ATMEGA328P with built-in support for
-basic TTY features, such as canonical line editing.
-
-__Important note:__ UARTTY has not been tested! It is currently alpha
-quality!
+basic TTY features, such as line editing.
 
 ## Features
 
@@ -41,11 +38,13 @@ UARTTY.)
 ```C
 #include <stdio.h>
 
+#include "uartty.h"
+
 #define BAUD 9600
 #define UBRR_VALUE (unsigned)((F_CPU) / (16.0 * (BAUD)) + 0.5 - 1)
 
 static FILE uartty_file = FDEV_SETUP_STREAM(uartty_putc, uartty_getc,
-        _FDEV_SETUP_RW);
+		_FDEV_SETUP_RW);
 
 int main(void)
 {
@@ -54,7 +53,9 @@ int main(void)
 	stdout = &uartty_file;
 	printf("Hello, world!\n");
 
-	return 0;
+	for (;;) {
+		putchar(getchar());
+	}
 }
 ```
 
@@ -75,17 +76,19 @@ queue.
 
 ## Installation
 
-TODO
+Get the latest version of this library with this command:
+
+    git clone https://github.com/abbrev/uartty.git
 
 ## API Reference
 
 This API is designed to be usable with the AVR-libc stdio module:
 
 ```C
-void uartty_init(unsigned int baudrate);
+void uartty_init(unsigned int ubrr);
 ```
 
-Initialize the UARTTY library. Pass in a baudrate. TODO scaled baudrate?
+Initialize the UARTTY library. Pass in the UBRR value.
 
 ```C
 int uartty_getc(FILE *unused);
@@ -144,9 +147,8 @@ enable or disable each option individually:
 * UARTTY\_OCRNL: convert carriage return to linefeed on output
 
 Enabling/disabling these options affects the generated code size:
-* 216 with "raw" preset
-* 966 with "sane" preset
-* 980 bytes with every option that increases code size enabled
+* 268 with "raw" preset
+* 1192 with "sane" preset
 (These are only the common configurations. A complete list of sizes for
 each combination of options would be prohibitively large.)
 
@@ -156,9 +158,7 @@ functions (one or both of these options must be enabled):
 * UARTTY\_BLOCK: build blocking getc and putc
 
 The code sizes listed above are based on blocking mode only.
-Non-blocking mode adds 60 bytes in raw mode and 92 bytes in sane mode.
-
-**Note:** These code sizes will change as UARTTY is developed!
+Non-blocking mode adds 94 bytes in raw mode and 74 bytes in sane mode.
 
 Buffer size options:
 * UARTTY\_TX\_BUF\_SIZE: size of output buffer (default 16)
