@@ -133,8 +133,15 @@
 #endif
 
 // we sacrifice one byte in our queues so the queues must be at least 2 bytes
+// or 4 bytes if ECHOCTL is enabled
+#if UARTTY_ECHOCTL
+#if UARTTY_TX_BUF_SIZE < 4 || UARTTY_TX_BUF_SIZE > 256
+# error UARTTY_TX_BUF_SIZE must be between 4 and 256
+#endif
+#else
 #if UARTTY_TX_BUF_SIZE < 2 || UARTTY_TX_BUF_SIZE > 256
-# error UARTTY_TX_BUF_SIZE must be between 2 and 256
+# error UARTTY_TX_BUF_SIZE must be between 4 and 256
+#endif
 #endif
 
 #if UARTTY_RX_BUF_SIZE < 2 || UARTTY_RX_BUF_SIZE > 256
