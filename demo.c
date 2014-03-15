@@ -15,5 +15,7 @@ int main(void)
 	stdout = &uartty_file;
 	printf("Hello, world!\n");
 
-	return 0;
+	for (;;) {
+		putchar(getchar());
+	}
 }
