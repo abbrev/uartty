@@ -117,7 +117,8 @@ Write a character to the UART without blocking.
 ## <a name="compile-time-options"></a>Compile-time options
 
 UARTTY can be configured at compile-time to behave differently. The
-default settings work well in most situations.
+default settings work well in most situations. All of the following
+options can be modified in the uartty-config.h file.
 
 Set UARTTY\_PRESET to one of these symbols to enable/disable a variety
 of modes:
