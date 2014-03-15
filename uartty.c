@@ -3,13 +3,10 @@
 #include <ctype.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>
+#include <util/atomic.h>
 
 #include "uartty.h"
 #include "uartty-config.h"
-
-#if !UARTTY_BLOCK && !UARTTY_NONBLOCK
-#error UARTTY_BLOCK or UARTTY_NONBLOCK (or both) must be enabled
-#endif
 
 // preset modes
 #define UARTTY_PRESET_RAW  1 // like cfmakeraw()
@@ -522,44 +519,40 @@ static int rxget(void)
 	return (unsigned char)data;
 }
 
-#if UARTTY_NONBLOCK
 int uartty_getc_nb(FILE *unused)
 {
 	return rxget();
 }
-#endif
 
 // TODO
 #define SLEEP() do ; while (0)
 
-#if UARTTY_BLOCK
 int uartty_getc(FILE *unused)
 {
 	(void)unused;
 	int c;
 
-	while ((c = rxget()) < 0) {
+	while ((c = uartty_getc_nb(unused)) < 0) {
 		SLEEP();
 	}
 	return c;
 }
-#endif
 
-#if UARTTY_NONBLOCK
 // non-blocking version
 int uartty_putc_nb(char data, FILE *unused)
 {
-	return tx_put(data);
+	int r;
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+		r = tx_put(data);
+	}
+	return r;
 }
-#endif
 
-#if UARTTY_BLOCK
 int uartty_putc(char data, FILE *unused)
 {
-	while (tx_put(data) < 0) {
+	while (uartty_putc_nb(data, unused) < 0) {
 		SLEEP();
 	}
 	return 0;
 }
-#endif
 

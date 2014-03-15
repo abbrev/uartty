@@ -57,10 +57,4 @@
 
 #endif
 
-
-// NONBLOCK: enable non-blocking getc and putc
-//#define UARTTY_NONBLOCK 1
-// BLOCK: enable blocking getc and putc
-#define UARTTY_BLOCK 1
-
 #endif

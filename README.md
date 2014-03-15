@@ -156,19 +156,11 @@ enable or disable each option individually:
 * UARTTY\_OCRNL: convert carriage return to linefeed on output
 
 Enabling/disabling these options affects the generated code size:
-* 268 with "raw" preset
-* 1142 with "sane" preset
+* 344 with "raw" preset
+* 1202 with "sane" preset
 
 (These are only the common configurations. A complete list of sizes for
 each combination of options would be prohibitively large.)
-
-UARTTY also supports both blocking and non-blocking getc and putc
-functions (one or both of these options must be enabled):
-* UARTTY\_NONBLOCK: build non-blocking getc and putc
-* UARTTY\_BLOCK: build blocking getc and putc
-
-The code sizes listed above are based on blocking mode only.
-Non-blocking mode adds 94 bytes in raw mode and 74 bytes in sane mode.
 
 Buffer size options:
 * UARTTY\_TX\_BUF\_SIZE: size of output buffer (default 16)

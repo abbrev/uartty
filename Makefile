@@ -1,7 +1,7 @@
 F_CPU = 16000000L
 CC = avr-gcc
 LD = avr-gcc
-CFLAGS += -mmcu=atmega328p -gstabs -D F_CPU=$(F_CPU) -O2
+CFLAGS += -mmcu=atmega328p -D F_CPU=$(F_CPU) -O2 --std=gnu99
 OBJCOPY=avr-objcopy
 OBJDUMP=avr-objdump
 
