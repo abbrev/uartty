@@ -235,6 +235,7 @@ static volatile unsigned char inlcount; // XXX this may need to be protected
 #define  ENABLE_TX_INTERRUPT() (UART0_CONTROL |= (1<<UART0_UDRIE))
 
 // send a character and return the character
+// return 0 on success
 // return -1 if queue is full
 static int tx_put(char data)
 {
@@ -244,7 +245,7 @@ static int tx_put(char data)
 	txq.buf[txq.put] = data;
 	txq.put = put;
 	ENABLE_TX_INTERRUPT();
-	return (unsigned char)data;
+	return 0;
 }
 
 // unreceive a character and return the character unreceived
@@ -259,6 +260,7 @@ static int rx_unput(void)
 }
 
 // receive a character and return the character received
+// return 0 on success
 // return -1 if rx queue is full
 static int rx_put(char data)
 {
@@ -268,7 +270,7 @@ static int rx_put(char data)
 	//if (data != '\n' && rxq.get == put2) return -1;
 	rxq.buf[rxq.put] = data;
 	rxq.put = put;
-	return (unsigned char)data;
+	return 0;
 }
 
 /*
@@ -539,7 +541,7 @@ int uartty_putc(char data, FILE *unused)
 	while (tx_put(data) < 0) {
 		SLEEP();
 	}
-	return (unsigned char)data;
+	return 0;
 }
 #endif
 
