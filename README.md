@@ -135,7 +135,7 @@ enable or disable each option individually:
 * UARTTY\_ECHONL: echo newline even when ECHO is not set
 * UARTTY\_ECHOCTL: echo control characters as ^X
 * UARTTY\_ERASE: character to erase the previous character
-* UARTTY\_WERASE: characte to erase the previous word
+* UARTTY\_WERASE: character to erase the previous word
 * UARTTY\_KILL: character to erase the entire line
 * UARTTY\_ICRNL: convert carriage return to linefeed on input
 * UARTTY\_INLCR: convert linefeed to carriage return on input
