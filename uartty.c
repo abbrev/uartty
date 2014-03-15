@@ -317,26 +317,27 @@ static volatile unsigned char erase_count;
 static bool erase_if_not(bool (*cond)(int c), bool kill)
 {
 	int u = rx_unput();
+	if (u == -1) return false;
 	if (u == '\n' || cond(u)) {
 		rx_put(u);
-	} else if (u != -1) {
-		if ((UARTTY_ECHOK && kill) ||
-		    (UARTTY_ECHOE && !kill)) {
-			// TODO protect erase_count
-			unsigned char e = erase_count;
+		return false;
+	}
+	if ((UARTTY_ECHOK && kill) ||
+	    (UARTTY_ECHOE && !kill)) {
+		// TODO protect erase_count
+		unsigned char e = erase_count;
+		if (tx_unput() < 0) {
+			++e;
+		}
+		if (UARTTY_ECHOCTL && ISCTL(u)) {
 			if (tx_unput() < 0) {
 				++e;
 			}
-			if (UARTTY_ECHOCTL && ISCTL(u))
-				if (tx_unput() < 0) {
-					++e;
-				}
-			erase_count = e;
-			ENABLE_TX_INTERRUPT();
 		}
-		return true;
+		erase_count = e;
+		ENABLE_TX_INTERRUPT();
 	}
-	return false;
+	return true;
 }
 
 static void erase_line_until(bool (*cond)(int c), bool kill)
