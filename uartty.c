@@ -234,12 +234,22 @@
 static volatile QUEUE(UARTTY_TX_BUF_SIZE) txq;
 static volatile QUEUE(UARTTY_RX_BUF_SIZE) rxq;
 static volatile unsigned char inlcount; // XXX this may need to be protected
+static volatile bool halt_output = false;
 
 #define RXQEMPTY() (rxq.get == rxq.put)
 #define TXQEMPTY() (txq.get == txq.put)
 
 #define DISABLE_TX_INTERRUPT() (UART0_CONTROL &= ~(1<<UART0_UDRIE))
 #define  ENABLE_TX_INTERRUPT() (UART0_CONTROL |= (1<<UART0_UDRIE))
+
+static int tx_unput(void)
+{
+	if (TXQEMPTY()) return -1;
+	unsigned char put = (txq.put - 1) & UARTTY_TX_BUF_MASK;
+	char data = txq.buf[put];
+	txq.put = put;
+	return (unsigned char)data;
+}
 
 // send a character and return the character
 // return 0 on success
@@ -317,9 +327,13 @@ static bool erase_if_not(bool (*cond)(int c), bool kill)
 		    (UARTTY_ECHOE && !kill)) {
 			// TODO protect erase_count
 			unsigned char e = erase_count;
-			++e;
-			if (UARTTY_ECHOCTL && ISCTL(u))
+			if (tx_unput() < 0) {
 				++e;
+			}
+			if (UARTTY_ECHOCTL && ISCTL(u))
+				if (tx_unput() < 0) {
+					++e;
+				}
 			erase_count = e;
 			ENABLE_TX_INTERRUPT();
 		}
@@ -353,8 +367,6 @@ static void echo(char c)
 	}
 }
 
-static volatile bool halt_output = false;
-
 ISR(UART0_RX_INTERRUPT)
 {
 	char data = UART0_DATA;
@@ -362,6 +374,7 @@ ISR(UART0_RX_INTERRUPT)
 	if (UARTTY_IXON) {
 		if (data == CTRL('S')) {
 			halt_output = true;
+			DISABLE_TX_INTERRUPT();
 			return;
 		} else if (data == CTRL('Q')) {
 			halt_output = false;
@@ -430,6 +443,7 @@ ISR(UART0_TX_INTERRUPT)
 {
 	if (UARTTY_IXON && halt_output) {
 		DISABLE_TX_INTERRUPT();
+		return;
 	}
 
 	static bool sendlf = false;
