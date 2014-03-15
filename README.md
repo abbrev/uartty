@@ -37,6 +37,7 @@ UARTTY.)
 
 ```C
 #include <stdio.h>
+#include <avr/interrupt.h>
 
 #include "uartty.h"
 
@@ -49,6 +50,10 @@ static FILE uartty_file = FDEV_SETUP_STREAM(uartty_putc, uartty_getc,
 int main(void)
 {
 	uartty_init(UBRR_VALUE);
+
+	// global interrupts must be enabled for UARTTY
+	sei();
+
 	stdin = &uartty_file;
 	stdout = &uartty_file;
 	printf("Hello, world!\n");
@@ -89,6 +94,9 @@ void uartty_init(unsigned int ubrr);
 ```
 
 Initialize the UARTTY library. Pass in the UBRR value.
+
+Global interrupts must be enabled after uartty_init() by calling sei()
+before any other UARTTY function.
 
 ```C
 int uartty_getc(FILE *unused);

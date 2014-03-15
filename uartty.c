@@ -505,8 +505,6 @@ void uartty_init(unsigned int ubrr)
 	// 8N1 asynchronous
 	UCSR0C = (1 << UCSZ01) | (1 << UCSZ00) | (0 << USBS0) |
 	         (0 << UPM01) | (0 << UPM00) | (0 << UMSEL01) | (0 << UMSEL00);
-
-	sei(); // XXX should the application do this?
 }
 
 static int rxget(void)
