@@ -175,11 +175,11 @@ the buffer indices.)
 
 ## Contributors
 
-TODO
+* Christopher Williams
 
 ## License
 
-TODO
+See LICENSE.
 
 ## How to pronounce UARTTY
 
